@@ -9,7 +9,7 @@ namespace UnityEssentials
 {
     public partial class GitHubRepositoryCloner
     {
-        public EditorWindowDrawer Window;
+        public EditorWindowBuilder Window;
         public Action Repaint;
         public Action Close;
 
@@ -24,7 +24,7 @@ namespace UnityEssentials
         public static void ShowUtility()
         {
             var editor = new GitHubRepositoryCloner();
-            editor.Window = EditorWindowDrawer
+            editor.Window = EditorWindowBuilder
                 .CreateInstance("GitHub Repository Cloner", new(400, 500))
                 .SetHeader(editor.Header, EditorWindowStyle.Toolbar)
                 .SetBody(editor.Body, EditorWindowStyle.Margin)

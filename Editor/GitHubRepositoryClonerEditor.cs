@@ -13,27 +13,6 @@ namespace UnityEssentials
         public Action Repaint;
         public Action Close;
 
-        [MenuItem("Assets/GitHub Repository Cloner", true)]
-        public static bool ValidateGitHubRepositoryCloner()
-        {
-            string path = GetSelectedPath();
-            return !string.IsNullOrEmpty(path) && Directory.Exists(path);
-        }
-
-        [MenuItem("Assets/GitHub Repository Cloner", priority = -80)]
-        public static void ShowUtility()
-        {
-            var editor = new GitHubRepositoryCloner();
-            editor.Window = EditorWindowBuilder
-                .CreateInstance("GitHub Repository Cloner", new(400, 500))
-                .SetHeader(editor.Header, EditorWindowStyle.Toolbar)
-                .SetBody(editor.Body, EditorWindowStyle.Margin)
-                .SetFooter(editor.Footer)
-                .GetRepaintEvent(out editor.Repaint)
-                .GetCloseEvent(out editor.Close)
-                .ShowAsUtility();
-        }
-
         public void Header()
         {
             if (string.IsNullOrEmpty(Token))

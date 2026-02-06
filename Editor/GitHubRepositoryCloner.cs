@@ -249,6 +249,7 @@ namespace UnityEssentials
                 string cloneUrl = $"https://{Token}@github.com/{repositoryFullName}.git"; // Include token in URL
                 string repositoryFolderName = repositoryFullName.Split('/')[1];
                 string packageName = repositoryFolderName.Split('.')[^1].Replace(ExcludeString, "");
+                string displayName = repositoryFolderName.Format();
                 string localPath = Path.Combine(targetFolder, repositoryFolderName);
 
                 if (Directory.Exists(localPath))
@@ -276,7 +277,7 @@ namespace UnityEssentials
                         CreateAssemblyDefinition(localPath, packageName);
 
                     if (ShouldCreatePackageManifests)
-                        CreatePackageManifest(localPath, packageName);
+                        CreatePackageManifest(localPath, packageName, displayName);
 
                     if (ShouldUseTemplateFiles)
                         CopyTemplateFiles(TemplateFolder, localPath);
@@ -427,9 +428,9 @@ namespace UnityEssentials
             File.WriteAllText(asmdefPath, json);
         }
 
-        private void CreatePackageManifest(string localPath, string packageName)
+        private void CreatePackageManifest(string localPath, string packageName, string displayName)
         {
-            var json = DefaultPackageManifestToJson(packageName);
+            var json = DefaultPackageManifestToJson(packageName, displayName);
 
             // Write to package.json file
             string packageJsonPath = Path.Combine(localPath, "package.json");
@@ -462,11 +463,11 @@ namespace UnityEssentials
             }
         }
 
-        private string DefaultPackageManifestToJson(string packageName)
+        private string DefaultPackageManifestToJson(string packageName, string displayName)
         {
             var manifest = new PackageManifestData();
             manifest.name = $"com.{DefaultOrganizationName.ToLower()}.{packageName.ToLower()}";
-            manifest.displayName = $"{DefaultOrganizationName} {packageName}";
+            manifest.displayName = displayName;
             manifest.unity = DefaultUnityVersion;
             manifest.version = "1.0.0";
             manifest.description = DefaultDescription;

@@ -58,7 +58,7 @@ namespace UnityEssentials
         private const string DefaultOrganizationName = "UnityEssentials";
         private const string DefaultUnityVersion = "6000.0";
         private const string DefaultDescription = "This is a part of the UnityEssentials Ecosystem";
-        private const string ExcludeString = "Unity";
+        private const string ExcludeString = "Unity.";
 
         public GitHubRepositoryCloner()
         {
@@ -248,8 +248,7 @@ namespace UnityEssentials
             {
                 string cloneUrl = $"https://{Token}@github.com/{repositoryFullName}.git"; // Include token in URL
                 string repositoryFolderName = repositoryFullName.Split('/')[1];
-                string packageName = repositoryFolderName.Split('.')[^1].Replace(ExcludeString, "");
-                string displayName = repositoryFolderName.Format();
+                string packageName = repositoryFolderName.Replace(ExcludeString, "");
                 string localPath = Path.Combine(targetFolder, repositoryFolderName);
 
                 if (Directory.Exists(localPath))
@@ -277,7 +276,7 @@ namespace UnityEssentials
                         CreateAssemblyDefinition(localPath, packageName);
 
                     if (ShouldCreatePackageManifests)
-                        CreatePackageManifest(localPath, packageName, displayName);
+                        CreatePackageManifest(localPath, packageName);
 
                     if (ShouldUseTemplateFiles)
                         CopyTemplateFiles(TemplateFolder, localPath);
@@ -428,13 +427,34 @@ namespace UnityEssentials
             File.WriteAllText(asmdefPath, json);
         }
 
-        private void CreatePackageManifest(string localPath, string packageName, string displayName)
+        private void CreatePackageManifest(string localPath, string packageName)
         {
-            var json = DefaultPackageManifestToJson(packageName, displayName);
+            var data = BuildDefaultPackageManifest(packageName);
 
             // Write to package.json file
             string packageJsonPath = Path.Combine(localPath, "package.json");
-            File.WriteAllText(packageJsonPath, json);
+
+            // normalize + serialize via PackageManifestData.ToJson().
+            PackageManifestUtilities.NormalizeForSave(data);
+            File.WriteAllText(packageJsonPath, data.ToJson());
+        }
+
+        private PackageManifestData BuildDefaultPackageManifest(string packageName)
+        {
+            var data = new PackageManifestData();
+
+            data.name = PackageManifestUtilities.ComposePackageName(DefaultOrganizationName, packageName);
+            data.displayName = (packageName ?? string.Empty).Replace(".", " ");
+            data.unity = DefaultUnityVersion;
+            data.version = "1.0.0";
+            data.description = DefaultDescription;
+            data.author = new PackageManifestData.Author { name = DefaultAuthorName };
+
+            // Ensure collections exist so normalization and UI editing work.
+            PackageManifestUtilities.EnsureDefaults(data);
+            data.dependencies.Clear();
+
+            return data;
         }
 
         private void CopyTemplateFiles(string sourceFolder, string destinationFolder)
@@ -463,19 +483,6 @@ namespace UnityEssentials
             }
         }
 
-        private string DefaultPackageManifestToJson(string packageName, string displayName)
-        {
-            var manifest = new PackageManifestData();
-            manifest.name = $"com.{DefaultOrganizationName.ToLower()}.{packageName.ToLower()}";
-            manifest.displayName = displayName;
-            manifest.unity = DefaultUnityVersion;
-            manifest.version = "1.0.0";
-            manifest.description = DefaultDescription;
-            manifest.author = new() { name = DefaultAuthorName };
-            manifest.dependencies = new();
-
-            return manifest.ToJson();
-        }
 
         private static string GetSelectedPath()
         {

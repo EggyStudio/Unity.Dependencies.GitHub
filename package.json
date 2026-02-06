@@ -1,7 +1,7 @@
 {
-  "name": "com.unityessentials.githubrepositorycloner",
-  "version": "1.0.1",
-  "displayName": "Unity Dependencies GitHubRepositoryCloner",
+  "name": "com.unityessentials.core.dependencies.github",
+  "version": "2.0.0",
+  "displayName": "Dependencies GitHub",
   "description": "This is a part of the UnityEssentials Ecosystem",
   "unity": "6000.0",
   "unityRelease": "",

@@ -227,7 +227,7 @@ namespace UnityEssentials
             {
                 string cloneUrl = $"https://{Token}@github.com/{repositoryFullName}.git"; // Include token in URL
                 string repositoryFolderName = repositoryFullName.Split('/')[1];
-                string packageName = repositoryFolderName.Replace(ExcludeString, "");
+                string packageName = repositoryFolderName.Split('.')[^1].Replace(ExcludeString, "");
                 string localPath = Path.Combine(targetFolder, repositoryFolderName);
 
                 if (Directory.Exists(localPath))

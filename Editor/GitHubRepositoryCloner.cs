@@ -69,7 +69,7 @@ namespace UnityEssentials
                 FetchRepositories();
         }
 
-        [MenuItem("Assets/GitHub Repository Cloner", true)]
+        [MenuItem("Assets/Git/Repository Cloner", true)]
         public static bool ValidateGitHubRepositoryCloner()
         {
             string path = GetSelectedPath();

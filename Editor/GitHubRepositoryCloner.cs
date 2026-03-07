@@ -115,24 +115,45 @@ namespace UnityEssentials
             client.DefaultRequestHeaders.Authorization =
                 new System.Net.Http.Headers.AuthenticationHeaderValue("token", Token);
 
-            var response = await client.GetAsync("https://api.github.com/user/repos?per_page=100");
-            if (!response.IsSuccessStatusCode)
+            var allRepositories = new List<string>();
+            int page = 1;
+
+            while (true)
             {
-                Debug.LogError("[Git] Invalid token or failed to fetch repositories. Clearing token.");
-                EditorPrefs.DeleteKey(TokenKey);
-                Token = "";
-                RepositoryNames.Clear();
-                AllRepositoryNames.Clear();
-                RepositorySelected.Clear();
-                IsFetching = false;
-                repaint?.Invoke();
-                return;
+                var response = await client.GetAsync($"https://api.github.com/user/repos?per_page=100&page={page}");
+                if (!response.IsSuccessStatusCode)
+                {
+                    Debug.LogError("[Git] Invalid token or failed to fetch repositories. Clearing token.");
+                    EditorPrefs.DeleteKey(TokenKey);
+                    Token = "";
+                    RepositoryNames.Clear();
+                    AllRepositoryNames.Clear();
+                    RepositorySelected.Clear();
+                    IsFetching = false;
+                    repaint?.Invoke();
+                    return;
+                }
+
+                string json = await response.Content.ReadAsStringAsync();
+                var pageRepositories = ExtractRepositoryNames(json);
+
+                if (pageRepositories.Count == 0)
+                    break;
+
+                allRepositories.AddRange(pageRepositories);
+
+                // GitHub page size is capped at 100; fewer items means last page.
+                if (pageRepositories.Count < 100)
+                    break;
+
+                page++;
             }
 
-            string json = await response.Content.ReadAsStringAsync();
-            var allRepositories = ExtractRepositoryNames(json);
+            allRepositories = allRepositories
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
 
-            // Filter out repositories that already exist anywhere in Assets
+            // Filter out repositories that already exist as git working copies in Assets
             var filteredByExistence = FilterExistingRepositories(allRepositories);
 
             // Store all fetched repositories
@@ -176,20 +197,36 @@ namespace UnityEssentials
         }
 
         /// <summary>
-        /// Filters out repositories that already exist anywhere in the Assets folder.
+        /// Filters out repositories that already exist as git working copies in the Assets folder.
         /// </summary>
         private List<string> FilterExistingRepositories(List<string> repositoryFullNames)
         {
             string assetsPath = Application.dataPath;
-            var existingFolders = new HashSet<string>(
-                Directory.GetDirectories(assetsPath, "*", SearchOption.AllDirectories)
-                    .Select(Path.GetFileName)
-            );
+            var existingFolders = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            // Treat only git working copies as already cloned repositories.
+            foreach (var gitFolder in Directory.GetDirectories(assetsPath, ".git", SearchOption.AllDirectories))
+            {
+                var repositoryRoot = Path.GetDirectoryName(gitFolder);
+                if (string.IsNullOrEmpty(repositoryRoot))
+                    continue;
+
+                var repositoryFolderName = Path.GetFileName(repositoryRoot);
+                if (!string.IsNullOrEmpty(repositoryFolderName))
+                    existingFolders.Add(repositoryFolderName);
+            }
 
             var filtered = new List<string>();
             foreach (var fullName in repositoryFullNames)
             {
-                string repoFolderName = fullName.Split('/')[1];
+                var split = fullName.Split('/');
+                if (split.Length < 2)
+                {
+                    filtered.Add(fullName);
+                    continue;
+                }
+
+                string repoFolderName = split[1];
                 if (!existingFolders.Contains(repoFolderName))
                     filtered.Add(fullName);
             }

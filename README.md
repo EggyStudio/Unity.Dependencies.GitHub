@@ -95,8 +95,8 @@ You can tweak defaults in `Editor/GitHubRepositoryCloner.cs`:
       ```bash
       git remote set-url origin https://github.com/<owner>/<name>.git
       ```
-- Pagination: only the first 100 repositories are fetched from the GitHub API
-- Existing folders: repos are filtered out if any existing folder under `Assets/` shares the same final folder name
+- Pagination: repositories are fetched page-by-page from the GitHub API (100 per page) until all are loaded
+- Existing clones: repos are filtered out when a git working copy under `Assets/` has the same final folder name
 - Menu availability: the Assets → GitHub Repository Cloner menu is enabled only when a valid folder (or asset inside one) is selected
 - Token header: uses the `token` auth scheme for the GitHub API request
 

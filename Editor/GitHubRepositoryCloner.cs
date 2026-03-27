@@ -1,4 +1,5 @@
-﻿#if UNITY_EDITOR
+﻿#pragma warning disable UAC1001
+#if UNITY_EDITOR
 using UnityEditor;
 using UnityEngine;
 using System.Net.Http;
